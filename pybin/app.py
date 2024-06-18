@@ -405,8 +405,8 @@ class Api:
     def add_cron_job(self, cron_job):
         result = cron.add(cron_job)
 
-        if DEBUG:
-            self.log("add_cron_job: " + str(result))
+        # if DEBUG:
+        #     self.log("add_cron_job: " + str(result))
 
         return json.dumps(result)
 
