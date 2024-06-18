@@ -443,7 +443,7 @@ if __name__ == "__main__":
     # https: // pywebview.flowrl.com/guide/api.html  # webview-create-window
     webview.create_window(
         "Smartcloud",
-        # url="/home/pi/firmware/out/index.html",
+        url="/home/pi/firmware/out/index.html",
         js_api=api,
         width=480,
         height=320,
@@ -453,7 +453,7 @@ if __name__ == "__main__":
         resizable=False,
         text_select=False,
         min_size=(320, 240),
-        background_color="#F00",
-        url="https://39b8-107-141-224-67.ngrok-free.app",
+        background_color="#F00"
+        # url="https://39b8-107-141-224-67.ngrok-free.app",
     )
     webview.start(debug=DEBUG, http_server=True)
