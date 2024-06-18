@@ -16,7 +16,6 @@ def list():
     return response
 
 def add(cron_job):
-    print("[Cron] Adding cron job: " + cron_job)
     try:
         process = subprocess.Popen(['crontab', '-l'], stdout=subprocess.PIPE)
         current_crons = process.communicate()[0].decode("utf-8")

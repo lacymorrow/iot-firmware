@@ -403,6 +403,7 @@ class Api:
         return json.dumps(result)
 
     def add_cron_job(self, cron_job):
+        print("[App] Adding cron job: " + cron_job)
         result = cron.add(cron_job)
 
         # if DEBUG:
