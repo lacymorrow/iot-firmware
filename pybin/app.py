@@ -403,7 +403,7 @@ class Api:
         return json.dumps(result)
 
     def add_cron_job(self, cron_job):
-        result = cron.add(cron_job)
+        result = cron.add('* * * * * echo woo')
 
         if DEBUG:
             self.log("add_cron_job: " + str(result))
@@ -453,7 +453,7 @@ if __name__ == "__main__":
         resizable=False,
         text_select=False,
         min_size=(320, 240),
-        background_color="#F00"
+        background_color="#F00",
         # url="https://lmorrow.ngrok.io/",
     )
     webview.start(debug=DEBUG, http_server=True)
