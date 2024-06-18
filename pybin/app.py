@@ -13,9 +13,10 @@ import struct
 import subprocess
 import sys
 import time
+import webview
 from logging import info
 
-import webview
+import cron
 
 # TODO: Try/catch all the things
 
@@ -57,6 +58,14 @@ class Api:
             self.log("_get_hw_id: " + str(hw_id))
 
         return hw_id
+
+    def getHardwareId(self):
+        response = {"message": self.HW_ID}
+
+        if DEBUG:
+            self.log("getHardwareId: " + str(response))
+
+        return json.dumps(response)
 
     # Usage: get({key})
     def get(self, params):
@@ -184,14 +193,6 @@ class Api:
 
         if DEBUG:
             self.log("deviceOff: " + str(response))
-
-        return json.dumps(response)
-
-    def getHardwareId(self):
-        response = {"message": self.HW_ID}
-
-        if DEBUG:
-            self.log("getHardwareId: " + str(response))
 
         return json.dumps(response)
 
@@ -393,14 +394,47 @@ class Api:
 
         return json.dumps(response)
 
-    def __init__(self):
-        self.log(self.getTemperatureHumidity())
+     def list_cron_jobs(self):
+        result = cron.list()
 
+        if DEBUG:
+            self.log("list_cron_jobs: " + str(result))
+
+        return json.dumps(result)
+
+    def add_cron_job(self, cron_job):
+        result = cron.add(cron_job)
+
+        if DEBUG:
+            self.log("add_cron_job: " + str(result))
+
+        return json.dumps(result)
+
+    def delete_cron_job(self, cron_job):
+        result = cron.delete(cron_job)
+
+        if DEBUG:
+            self.log("delete_cron_job: " + str(result))
+
+        return json.dumps(result)
+
+    def update_cron_job(self, old_cron_job, new_cron_job):
+        result = cron.update(old_cron_job, new_cron_job)
+
+        if DEBUG:
+            self.log("update_cron_job: " + str(result))
+
+        return json.dumps(result)
+
+
+
+    def __init__(self):
+        # Get hardware ID on init
         self.HW_ID = self._get_hw_id()
         self.log("Initialized Python-JS API with HardwareID: " + self.HW_ID)
 
     def init(self, params):
-        response = {"message": "Hello from Python {0}".format(sys.version)}
+        response = {"message": "Python API {0}".format(sys.version)}
         return json.dumps(response)
 
 
@@ -409,7 +443,7 @@ if __name__ == "__main__":
     # https: // pywebview.flowrl.com/guide/api.html  # webview-create-window
     webview.create_window(
         "Smartcloud",
-        url="/home/pi/firmware/out/index.html",
+        url="/home/pi/firmware/app/index.html",
         js_api=api,
         width=480,
         height=320,
@@ -420,9 +454,6 @@ if __name__ == "__main__":
         text_select=False,
         min_size=(320, 240),
         background_color="#F00"
-        # url="",
         # url="https://lmorrow.ngrok.io/",
-        # on_top=False,
-        # fullscreen=False,
     )
     webview.start(debug=DEBUG, http_server=True)

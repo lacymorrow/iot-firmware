@@ -1,5 +1,7 @@
 #!/bin/sh
 
+echo "-*- First Run -*-"
+
 # Config after getting network
 
 if : >/dev/tcp/8.8.8.8/53; then

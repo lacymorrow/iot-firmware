@@ -18,7 +18,26 @@ echo "-*- Update -*-"
 sudo git -C /home/pi/firmware pull
 
 
+# Check if we have a first run
+if [ ! -e /home/pi/.first_run ]; then
+	sudo bash /home/pi/firmware/bin/setup/first-run.sh
+fi
+
+# Allow opening X windows by anyone (allows opening windows from ssh)
+export DISPLAY=:0
+xhost +
+
+# Start the app
 sudo bash /home/pi/firmware/bin/boot.sh
+
+
+
+
+
+
+
+
+
 
 # # Driver setup
 

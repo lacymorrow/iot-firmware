@@ -1,4 +1,4 @@
 #!/bin/bash
 
 #remove gpio instance
-# echo $pin > /sys/class/gpio/unexport
+echo $1 > /sys/class/gpio/unexport

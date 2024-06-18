@@ -1,3 +1,9 @@
+#!/bin/bash
+
+# Set GPIO to OFF
+# Usage: gpio-off.sh [GPIO]
+# If no GPIO is set, it will default to GPIO 26
+
 if [[ ! -z $1 ]]; then
 	echo "Set GPIO $1 to OFF!"
     
