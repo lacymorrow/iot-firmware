@@ -443,7 +443,7 @@ if __name__ == "__main__":
     # https: // pywebview.flowrl.com/guide/api.html  # webview-create-window
     webview.create_window(
         "Smartcloud",
-        url="/home/pi/firmware/app/index.html",
+        url="/home/pi/firmware/out/index.html",
         js_api=api,
         width=480,
         height=320,
