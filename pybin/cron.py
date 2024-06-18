@@ -33,7 +33,7 @@ def delete(cron_job):
         process = subprocess.Popen(['crontab', '-l'], stdout=subprocess.PIPE)
         current_crons = process.communicate()[0].decode("utf-8")
         log("Current crons: " + current_crons)
-        new_crons = "\n".join([line for line in current_crons.split("\n") if line.strip() != cron_job])
+        new_crons = "\n".join([line for line in current_crons.split("\n") if line.strip() != cron_job.strip()])
         log("New crons: " + new_crons)
         subprocess.run(['crontab', '-'], input=new_crons.encode("utf-8"), check=True)
         response = {"message": "Cron job deleted"}
