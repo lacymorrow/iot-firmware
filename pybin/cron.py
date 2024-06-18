@@ -29,6 +29,7 @@ def add(cron_job):
 
 def delete(cron_job):
     try:
+        log("Deleting cron job: " + cron_job)
         process = subprocess.Popen(['crontab', '-l'], stdout=subprocess.PIPE)
         current_crons = process.communicate()[0].decode("utf-8")
         log("Current crons: " + current_crons)
