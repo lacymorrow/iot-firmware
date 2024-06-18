@@ -453,7 +453,7 @@ if __name__ == "__main__":
         resizable=False,
         text_select=False,
         min_size=(320, 240),
-        background_color="#F00"
+        background_color="#F00",
         url="https://39b8-107-141-224-67.ngrok-free.app",
     )
     webview.start(debug=DEBUG, http_server=True)
