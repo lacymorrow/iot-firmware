@@ -28,6 +28,17 @@ TMP_DIR = "/home/pi/iot_tmp/"
 The pywebview front facing gui
 """
 
+def parse_react_json(react_json):
+    try:
+        p = ast.literal_eval(react_json)
+    except:
+        try:
+            p = ast.literal_eval(json.dumps(react_json))
+        except:
+            return ""
+
+    return p
+
 class Api:
     # Get raspi hardware ID
     def _get_hw_id(self):
