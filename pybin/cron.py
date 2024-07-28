@@ -8,7 +8,7 @@ def log(text):
 
 def listAll():
     try:
-        process = subprocess.check_output(['crontab', '-l'], stderr=subprocess.STDOUT)
+        process = subprocess.check_output(['sudo', 'crontab', '-l'], stderr=subprocess.STDOUT)
         cron_jobs = process.decode("utf-8").strip().split('\n')
         named_jobs = {}
         for line in cron_jobs:
