@@ -11,11 +11,13 @@ def list():
         process = subprocess.check_output(['crontab', '-l'], stderr=subprocess.STDOUT)
         cron_jobs = process.decode("utf-8").strip().split('\n')
         named_jobs = {}
-        for i in range(0, len(cron_jobs), 2):
-            if i+1 < len(cron_jobs):
-                name = cron_jobs[i].strip('# NAME: ')
-                job = cron_jobs[i+1]
-                named_jobs[name] = job
+        for line in cron_jobs:
+            if line.startswith('# NAME:'):
+                name = line.strip('# NAME:').strip()
+                named_jobs[name] = ''
+            elif line.strip() and not line.startswith('#'):
+                last_name = list(named_jobs.keys())[-1] if named_jobs else 'Unnamed'
+                named_jobs[last_name] = line.strip()
         response = {"message": named_jobs}
     except subprocess.CalledProcessError as e:
         response = {"error": "Could not list cron jobs", "details": str(e)}
