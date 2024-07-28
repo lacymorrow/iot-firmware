@@ -444,6 +444,14 @@ class Api:
         self.log("delete_cron_job: " + str(result))
         return json.dumps(result)
 
+    def delete_all_cron_jobs(self):
+        result = cron.delete_all()
+        if DEBUG:
+            self.log("delete_all_cron_jobs: " + str(result))
+
+        self.log("delete_all_cron_jobs: " + str(result))
+        return json.dumps(result)
+
     def update_cron_job(self, params):
         p = parse_react_json(params)
         if not p or "old_name" not in p or "new_cron_job" not in p or "new_name" not in p:

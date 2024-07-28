@@ -57,6 +57,15 @@ def delete(name):
 
     return response
 
+def delete_all():
+    try:
+        subprocess.run(['crontab', '-r'], check=True)
+        response = {"message": "All cron jobs deleted"}
+    except subprocess.CalledProcessError as e:
+        response = {"error": "Could not delete all cron jobs", "details": str(e)}
+
+    return response
+
 def update(old_name, new_cron_job, new_name):
     try:
         delete_result = delete(old_name)
