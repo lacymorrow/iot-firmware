@@ -35,4 +35,8 @@ With a fresh Raspberry Pi running RaspberryPi OS (Raspbian):
 
 - `sudo git -C /home/pi/firmware pull` to update the firmware
 - `sudo python /home/pi/firmware/drivers/temperhum/temperhum.py` to test the temperature and humidity sensor
-- `sudo bash firmware/bin/init`
+- `sudo bash /home/pi/firmware/bin/init` to run the app
+- `sudo bash /home/pi/firmware/bin/setup/update.sh` to update the system
+- `sudo tail -f /proc/PID/fd/1` to see the logs
+- `sudo kill -9 PID` to kill the process
+- `sudo reboot 0` to reboot the system

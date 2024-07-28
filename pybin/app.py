@@ -63,6 +63,7 @@ class Api:
         if DEBUG:
             self.log("getHardwareId: " + str(response))
 
+        self.log("getHardwareId: " + str(response))
         return json.dumps(response)
 
     # Usage: get({key})
@@ -88,6 +89,7 @@ class Api:
         if DEBUG:
             self.log("get: " + str(params) + " - " + str(response))
 
+        self.log("get: " + str(params) + " - " + str(response))
         return json.dumps(response)
 
     # Usage: set({key, data})
@@ -144,6 +146,7 @@ class Api:
         if DEBUG:
             self.log("deviceOn: " + str(response))
 
+        self.log("deviceOn: " + str(response))
         return json.dumps(response)
 
     def deviceOff(self):
@@ -171,6 +174,7 @@ class Api:
         if DEBUG:
             self.log("deviceOff: " + str(response))
 
+        self.log("deviceOff: " + str(response))
         return json.dumps(response)
 
     def getDeviceStatus(self):
@@ -190,8 +194,9 @@ class Api:
             }
 
         if DEBUG:
-            self.log("deviceOff: " + str(response))
+            self.log("getDeviceStatus: " + str(response))
 
+        self.log("getDeviceStatus: " + str(response))
         return json.dumps(response)
 
     def getIpAddress(self):
@@ -209,12 +214,18 @@ class Api:
         if DEBUG:
             self.log("getIpAddress: " + str(response))
 
+        self.log("getIpAddress: " + str(response))
         return json.dumps(response)
 
     def getRandomNumber(self, params):
         randNum = random.randint(0, 100000000)
         message = "Random IO: {0}".format(randNum)
         response = {"message": message}
+
+        if DEBUG:
+            self.log("getRandomNumber: " + str(response))
+
+        self.log("getRandomNumber: " + str(response))
         return json.dumps(response)
 
     def getTemperatureHumidity(self):
@@ -243,6 +254,8 @@ class Api:
         if DEBUG:
             self.log("getTemperatureHumidity: " + str(response))
 
+
+        self.log("getTemperatureHumidity: " + str(response))
         return json.dumps(response)
 
     def getWifiInfo(self):
@@ -270,6 +283,7 @@ class Api:
         if DEBUG:
             self.log("getWifiInfo: " + str(response))
 
+        self.log("getWifiInfo: " + str(response))
         return json.dumps(response)
 
     def getWifiNetworks(self):
@@ -289,8 +303,9 @@ class Api:
             }
 
         if DEBUG:
-            self.log("getWifiInfo: " + str(response))
+            self.log("getWifiNetworks: " + str(response))
 
+        self.log("getWifiNetworks: " + str(response))
         return json.dumps(response)
 
     # Connect to a wifi network
@@ -322,6 +337,7 @@ class Api:
         if DEBUG:
             self.log("setWifiNetwork: " + str(params) + " - " + str(response))
 
+        self.log("setWifiNetwork: " + str(params) + " - " + str(response))
         return json.dumps(response)
 
     def checkWifiConnection(self):
@@ -347,6 +363,7 @@ class Api:
         if DEBUG:
             self.log("checkWifiConnection: " + str(response))
 
+        self.log("checkWifiConnection: " + str(response))
         return json.dumps(response)
 
     def log(self, text):
@@ -392,12 +409,15 @@ class Api:
         if DEBUG:
             self.log("update: " + str(response))
 
+        self.log("update: " + str(response))
         return json.dumps(response)
 
     def list_cron_jobs(self):
         result = cron.list()
         if DEBUG:
             self.log("list_cron_jobs: " + str(result))
+
+        self.log("list_cron_jobs: " + str(result))
         return json.dumps(result)
 
     def add_cron_job(self, params):
@@ -408,6 +428,7 @@ class Api:
 
         self.log(f"[App] Adding cron job: {p['name']} - {p['cron_job']}")
         result = cron.add(p['cron_job'], p['name'])
+        self.log("add_cron_job: " + str(result))
         return json.dumps(result)
 
     def delete_cron_job(self, params):
@@ -418,7 +439,9 @@ class Api:
 
         result = cron.delete(p['name'])
         if DEBUG:
-            self.log(f"delete_cron_job: {str(result)}")
+            self.log("delete_cron_job: " + str(result))
+
+        self.log("delete_cron_job: " + str(result))
         return json.dumps(result)
 
     def update_cron_job(self, params):
@@ -429,7 +452,9 @@ class Api:
 
         result = cron.update(p['old_name'], p['new_cron_job'], p['new_name'])
         if DEBUG:
-            self.log(f"update_cron_job: {str(result)}")
+            self.log("update_cron_job: " + str(result))
+
+        self.log("update_cron_job: " + str(result))
         return json.dumps(result)
 
     def shutdown(self):
