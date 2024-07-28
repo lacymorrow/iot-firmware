@@ -29,7 +29,7 @@ TMP_DIR = "/home/pi/iot_tmp/"
 STORAGE_FILE = TMP_DIR + ".iot_storage_"
 
 
-def parse_react_json(self, react_json):
+def parse_react_json(react_json):
     try:
         p = ast.literal_eval(react_json)
     except:

@@ -25,3 +25,8 @@ With a fresh Raspberry Pi running RaspberryPi OS (Raspbian):
 - Enables SSH
 - Adds boot config for attached display
 - Adds boot script (`User pi autostart`)
+
+## Workflow
+
+- Copy the static build to the `out` folder
+- (On the Raspberry Pi) Run `sudo git -C /home/pi/firmware pull` to update the firmware
