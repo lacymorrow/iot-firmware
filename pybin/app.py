@@ -29,16 +29,19 @@ TMP_DIR = "/home/pi/iot_tmp/"
 STORAGE_FILE = TMP_DIR + ".iot_storage_"
 
 
-class Api:
-    def parse_react_json(self, react_json):
+def parse_react_json(self, react_json):
+    try:
+        p = ast.literal_eval(react_json)
+    except:
         try:
-            return ast.literal_eval(react_json)
+            p = ast.literal_eval(json.dumps(react_json))
         except:
-            try:
-                return json.loads(react_json)
-            except:
-                return None
+            return ""
 
+    return p
+
+
+class Api:
     # Get raspi hardware ID
     def _get_hw_id(self):
         # Extract serial from cpuinfo file
@@ -66,12 +69,9 @@ class Api:
 
     # Usage: get({key})
     def get(self, params):
-        p = self.parse_react_json(params)
-        if p is None:
-            response = {"error": "Error: Invalid JSON provided"}
-            return json.dumps(response)
+        p = parse_react_json(params)
 
-        if "key" in p:
+        if p != "" and "key" in p:
             key = p["key"]
             try:
                 f = open(STORAGE_FILE + str(key), "r")
@@ -94,9 +94,9 @@ class Api:
 
     # Usage: set({key, data})
     def set(self, params):
-        p = self.parse_react_json(params)
-        if p is None:
-            response = {"error": "Error: Invalid JSON provided"}
+        p = parse_react_json(params)
+        if p == "":
+            response = {"error": "Error: key and value must be provided"}
             return json.dumps(response)
 
         if "key" in p and "data" in p:
@@ -296,9 +296,9 @@ class Api:
 
     # Connect to a wifi network
     def setWifiNetwork(self, params):
-        p = self.parse_react_json(params)
-        if p is None:
-            response = {"error": "Error: Invalid JSON provided"}
+        p = parse_react_json(params)
+        if p == "":
+            response = {"error": "Error: No credentials provided"}
             return json.dumps(response)
 
         if "ssid" in p and "password" in p:
@@ -318,7 +318,7 @@ class Api:
 
             response = {"message": str(process.decode("utf-8"))}
         else:
-            response = {"error": "Error: No credentials provided"}
+            response = {"message": "Error: Invalid credentials"}
 
         if DEBUG:
             self.log("setWifiNetwork: " + str(params) + " - " + str(response))
@@ -402,36 +402,30 @@ class Api:
 
         return json.dumps(result)
 
-    def add_cron_job(self, params):
-        p = self.parse_react_json(params)
-        if p is None:
-            response = {"error": "Error: Invalid JSON provided"}
-            return json.dumps(response)
-        result = cron.add(p["cron_job"], p["name"])
+    def add_cron_job(self, cron_job):
+        print("[App] Adding cron job: " + cron_job)
+        result = cron.add(cron_job)
+
+        # if DEBUG:
+        #     self.log("add_cron_job: " + str(result))
+
         return json.dumps(result)
 
-    def delete_cron_job(self, params):
-        p = self.parse_react_json(params)
-        if p is None:
-            response = {"error": "Error: Invalid JSON provided"}
-            return json.dumps(response)
-        result = cron.delete(p["name"])
+    def delete_cron_job(self, cron_job):
+        result = cron.delete(cron_job)
+
         if DEBUG:
-            self.log(f"delete_cron_job: {str(result)}")
+            self.log("delete_cron_job: " + str(result))
+
         return json.dumps(result)
 
-    def update_cron_job(self, params):
-        p = self.parse_react_json(params)
-        if p is None:
-            response = {"error": "Error: Invalid JSON provided"}
-            return json.dumps(response)
-        delete_result = cron.delete(p["old_name"])
-        if "error" in delete_result:
-            return json.dumps(delete_result)
-        add_result = cron.add(p["new_cron_job"], p["new_name"])
+    def update_cron_job(self, old_cron_job, new_cron_job):
+        result = cron.update(old_cron_job, new_cron_job)
+
         if DEBUG:
-            self.log(f"update_cron_job: {str(add_result)}")
-        return json.dumps(add_result)
+            self.log("update_cron_job: " + str(result))
+
+        return json.dumps(result)
 
 
 
