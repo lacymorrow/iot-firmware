@@ -413,7 +413,7 @@ class Api:
         return json.dumps(response)
 
     def list_cron_jobs(self):
-        result = cron.list()
+        result = cron.listAll()
         if DEBUG:
             self.log("list_cron_jobs: " + str(result))
 

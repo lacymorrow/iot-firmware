@@ -6,7 +6,7 @@ DEBUG = True
 def log(text):
     print("[Cron] %s" % text)
 
-def list():
+def listAll():
     try:
         process = subprocess.check_output(['crontab', '-l'], stderr=subprocess.STDOUT)
         cron_jobs = process.decode("utf-8").strip().split('\n')
