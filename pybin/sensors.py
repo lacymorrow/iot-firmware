@@ -1,6 +1,8 @@
 import subprocess
 import json
 
+DEBUG = True
+
 def log(text):
     print("[Sensors] %s" % text)
 
@@ -9,7 +11,7 @@ def getTemperatureHumidity(self):
         # Get temp/humidity from device
         result = (
             subprocess.check_output(
-                ["sudo", "temperhum.py", "--nosymbols"],
+                ["sudo", "python", "/home/pi/firmware/drivers/temperhum/temperhum.py", "--nosymbols"]
             )
             .decode()
             .strip()

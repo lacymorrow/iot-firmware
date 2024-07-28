@@ -1,5 +1,2 @@
 pywebview # for GUI
 pyusb # for temperature/humidity sensor
-
-# pynput # RPi.GPIO
-
