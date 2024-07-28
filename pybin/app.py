@@ -19,6 +19,9 @@ from logging import info
 
 import cron
 
+DEBUG = True
+TMP_DIR = "/home/pi/iot_tmp/"
+
 # TODO: Try/catch all the things
 
 """
