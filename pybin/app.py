@@ -361,6 +361,7 @@ class Api:
         response = {"message": "ok"}
         return json.dumps(response)
 
+    # This deletes all settings!
     def removeAllStorage(self):
         try:
             os.system("find " + TMP_DIR + " -mindepth 1 -delete")
@@ -431,7 +432,18 @@ class Api:
             self.log(f"update_cron_job: {str(result)}")
         return json.dumps(result)
 
+    def shutdown(self):
+        self.log("Shutting down the application...")
 
+        # Close the webview window
+        webview.windows[0].destroy()
+
+        # Set the program running flag to False
+        global programRunning
+        programRunning = False
+
+        # Terminate the process
+        os._exit(0)
 
     def __init__(self):
         # Get hardware ID on init
