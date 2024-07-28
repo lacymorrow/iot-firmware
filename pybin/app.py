@@ -1,340 +1,451 @@
 """
-IoT Device Management Application
-
-This script provides a web-based interface for managing IoT devices using pywebview.
-It includes functionality for device control, system information retrieval, and configuration management.
+Todo:
+- Consistant string deliminator '/"
 """
-
 import ast
+import fcntl
 import json
 import os
 import random
 import re
+import socket
+import struct
 import subprocess
+import sys
 import time
 import webview
-import logging
-from typing import Dict, Any
+from logging import info
 
 import cron
 
-# Configuration
+# TODO: Try/catch all the things
+
+"""
+The pywebview front facing gui
+"""
+
 DEBUG = True
 TMP_DIR = "/home/pi/iot_tmp/"
-STORAGE_FILE = os.path.join(TMP_DIR, ".iot_storage_")
+STORAGE_FILE = TMP_DIR + ".iot_storage_"
 
-# Set up logging
-logging.basicConfig(level=logging.DEBUG if DEBUG else logging.INFO,
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-def parse_react_json(react_json: str) -> Dict[str, Any]:
-    """Parse JSON data from React."""
+def parse_react_json(react_json):
     try:
-        return ast.literal_eval(react_json)
-    except (ValueError, SyntaxError):
+        p = ast.literal_eval(react_json)
+    except:
         try:
-            return json.loads(react_json)
-        except json.JSONDecodeError:
-            logger.error(f"Failed to parse JSON: {react_json}")
-            return {}
+            p = ast.literal_eval(json.dumps(react_json))
+        except:
+            return ""
+
+    return p
 
 class Api:
-    def __init__(self):
-        self.hw_id = self._get_hw_id()
-        logger.info(f"Initialized Python-JS API with HardwareID: {self.hw_id}")
-
-    def _get_hw_id(self) -> str:
-        """Get Raspberry Pi hardware ID."""
+    # Get raspi hardware ID
+    def _get_hw_id(self):
+        # Extract serial from cpuinfo file
+        hw_id = "0000000000000000"
         try:
-            with open("/proc/cpuinfo", "r") as f:
-                for line in f:
-                    if line.startswith("Serial"):
-                        return line.split(":")[-1].strip()
-        except IOError:
-            logger.error("Failed to read hardware ID", exc_info=True)
-        return "ERROR000000000"
+            f = open("/proc/cpuinfo", "r")
+            for line in f:
+                if line[0:6] == "Serial":
+                    hw_id = line[10:26]
+            f.close()
+        except:
+            hw_id = "ERROR000000000"
+        if DEBUG:
+            self.log("_get_hw_id: " + str(hw_id))
 
-    def get_hardware_id(self) -> str:
-        """Return the hardware ID as JSON."""
-        return json.dumps({"message": self.hw_id})
+        return hw_id
 
-    def get(self, params: str) -> str:
-        """Retrieve a value from storage."""
+    def getHardwareId(self):
+        response = {"message": self.HW_ID}
+
+        if DEBUG:
+            self.log("getHardwareId: " + str(response))
+
+        return json.dumps(response)
+
+    # Usage: get({key})
+    def get(self, params):
         p = parse_react_json(params)
-        if not p or "key" not in p:
-            return json.dumps({"error": "No key provided"})
 
-        key = p["key"]
-        try:
-            with open(f"{STORAGE_FILE}{key}", "r") as f:
-                value = f.read()
+        if p != "" and "key" in p:
+            key = p["key"]
             try:
-                response = {"message": ast.literal_eval(value)}
-            except (ValueError, SyntaxError):
-                response = {"message": value}
-        except IOError:
-            logger.error(f"Failed to read from storage: {key}", exc_info=True)
-            response = {"message": ""}
+                f = open(STORAGE_FILE + str(key), "r")
+                value = f.read()
+                f.close()
+                try:
+                    response = {"message": ast.literal_eval(value)}
+                except:
+                    response = {"message": str(value)}
+            except:
+                # Not set
+                response = {"message": ""}
+        else:
+            response = {"error": "Error: No key provided"}
 
-        logger.debug(f"get: {params} - {response}")
+        if DEBUG:
+            self.log("get: " + str(params) + " - " + str(response))
+
         return json.dumps(response)
 
-    def set(self, params: str) -> str:
-        """Set a value in storage."""
+    # Usage: set({key, data})
+    def set(self, params):
         p = parse_react_json(params)
-        if not p or "key" not in p or "data" not in p:
-            return json.dumps({"error": "Key and value must be provided"})
+        if p == "":
+            response = {"error": "Error: key and value must be provided"}
+            return json.dumps(response)
 
-        key, data = str(p["key"]), str(p["data"])
-        try:
-            os.makedirs(TMP_DIR, exist_ok=True)
-            with open(f"{STORAGE_FILE}{key}", "w") as f:
+        if "key" in p and "data" in p:
+            key = str(p["key"])
+            data = str(p["data"])
+            try:
+                # Create folder if needed
+                if not os.path.exists(TMP_DIR):
+                    os.makedirs(TMP_DIR)
+                f = open(STORAGE_FILE + key, "w")
                 f.write(data)
-            logger.info(f"Set {key}: {data}")
-            response = {"message": "ok"}
-        except IOError:
-            logger.error(f"Failed to set {key}", exc_info=True)
-            response = {"error": "Could not set file"}
+                f.close()
+                response = {"message": "ok"}
+                self.log("Set " + key + ": " + data)
+            except:
+                response = {"error": "Error: Could not set file"}
+        else:
+            response = {"error": "Set Error"}
 
-        logger.debug(f"set: {params} - {response}")
+        if DEBUG:
+            self.log("set: " + str(params) + " - " + str(response))
+
         return json.dumps(response)
 
-    def device_on(self) -> str:
-        """Turn on a device."""
+    def deviceOn(self):
         device = "26"
         try:
+            # Use subprocess.check_output if you expect a response
             process = subprocess.check_output(
-                ["sudo", "bash", "/home/pi/firmware/bin/util/gpio.sh", "write", device, "1"],
-                stderr=subprocess.STDOUT
+                [
+                    "sudo",
+                    "bash",
+                    "/home/pi/firmware/bin/util/gpio.sh",
+                    "write",
+                    device,
+                    "1",
+                ],
+                stderr=subprocess.STDOUT,
             )
-            response = {"message": process.decode("utf-8").strip()}
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to turn on device: {e}", exc_info=True)
-            response = {"error": "Could not turn on device"}
 
-        logger.debug(f"device_on: {response}")
+            response = {"message": str(process.decode("utf-8").strip())}
+        except:
+            response = {
+                "error": "Could not turn on device",
+            }
+
+        if DEBUG:
+            self.log("deviceOn: " + str(response))
+
         return json.dumps(response)
 
-    def device_off(self) -> str:
-        """Turn off a device."""
+    def deviceOff(self):
         device = "26"
         try:
+            # Use subprocess.check_output if you expect a response
             process = subprocess.check_output(
-                ["sudo", "bash", "/home/pi/firmware/bin/util/gpio.sh", "write", device, "0"],
-                stderr=subprocess.STDOUT
+                [
+                    "sudo",
+                    "bash",
+                    "/home/pi/firmware/bin/util/gpio.sh",
+                    "write",
+                    device,
+                    "0",
+                ],
+                stderr=subprocess.STDOUT,
             )
-            response = {"message": process.decode("utf-8").strip()}
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to turn off device: {e}", exc_info=True)
-            response = {"error": "Could not turn off device"}
 
-        logger.debug(f"device_off: {response}")
+            response = {"message": str(process.decode("utf-8").strip())}
+        except:
+            response = {
+                "error": "Could not turn off device",
+            }
+
+        if DEBUG:
+            self.log("deviceOff: " + str(response))
+
         return json.dumps(response)
 
-    def get_device_status(self) -> str:
-        """Get the status of a device."""
+    def getDeviceStatus(self):
         device = "26"
         try:
+            # Use subprocess.check_output if you expect a response
             process = subprocess.check_output(
                 ["sudo", "bash", "/home/pi/firmware/bin/util/gpio.sh", "read", device],
-                stderr=subprocess.STDOUT
+                stderr=subprocess.STDOUT,
             )
-            result = process.decode("utf-8")
+
+            result = str(process.decode("utf-8"))
             response = {"message": "on" if "1" in result else "off"}
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to get device status: {e}", exc_info=True)
-            response = {"error": "Could not read device status"}
+        except:
+            response = {
+                "error": "Could not read device status",
+            }
 
-        logger.debug(f"get_device_status: {response}")
+        if DEBUG:
+            self.log("deviceOff: " + str(response))
+
         return json.dumps(response)
 
-    def get_ip_address(self) -> str:
-        """Get the IP address of the device."""
+    def getIpAddress(self):
         try:
-            process = subprocess.check_output(["hostname", "-I"])
-            ip = process.decode("utf-8").split()[0]
-            response = {"message": ip}
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to get IP address: {e}", exc_info=True)
-            response = {"error": "Could not get IP"}
+            process = subprocess.check_output(["hostname", "-I"]).split()[0]
+            ip = process.decode("utf-8")
+            response = {
+                "message": ip,
+            }
+        except:
+            response = {
+                "error": "Could not get IP",
+            }
 
-        logger.debug(f"get_ip_address: {response}")
+        if DEBUG:
+            self.log("getIpAddress: " + str(response))
+
         return json.dumps(response)
 
-    def get_random_number(self, params: str) -> str:
-        """Generate a random number."""
-        rand_num = random.randint(0, 100000000)
-        message = f"Random IO: {rand_num}"
+    def getRandomNumber(self, params):
+        randNum = random.randint(0, 100000000)
+        message = "Random IO: {0}".format(randNum)
         response = {"message": message}
         return json.dumps(response)
 
-    def get_temperature_humidity(self) -> str:
-        """Get the temperature and humidity readings."""
+    def getTemperatureHumidity(self):
         try:
-            result = subprocess.check_output(["sudo", "temperhum.py", "--nosymbols"]).decode().strip()
-            temp, hum = result.split()
-            response = {"message": {"temperature": temp, "humidity": hum}}
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to get temperature and humidity: {e}", exc_info=True)
+            # Get temp/humidity from device
+            result = (
+                subprocess.check_output(
+                    ["sudo", "temperhum.py", "--nosymbols"],
+                )
+                .decode()
+                .strip()
+            )
+            [temp, hum] = result.split(" ")
+
+            response = {
+                "message": {
+                    "temperature": temp,
+                    "humidity": hum,
+                }
+            }
+
+        except:
+
             response = {"error": "getTemperatureHumidity Error"}
 
-        logger.debug(f"get_temperature_humidity: {response}")
+        if DEBUG:
+            self.log("getTemperatureHumidity: " + str(response))
+
         return json.dumps(response)
 
-    def get_wifi_info(self) -> str:
-        """Get the Wi-Fi network information."""
+    def getWifiInfo(self):
         try:
             process = subprocess.check_output(["sudo", "iwconfig", "wlan0"])
             info = process.decode("utf-8")
+
             groups = re.search(r'ESSID:"(.+)"[\S\s.]+Link Quality=(\d+)', info)
-            if groups:
-                logger.debug(f"Network: {groups.group(1)} Quality: {groups.group(2)}")
-                response = {"message": {"ssid": groups.group(1), "quality": groups.group(2)}}
-            else:
-                response = {"error": "getWifiInfo Error"}
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to get Wi-Fi info: {e}", exc_info=True)
+
+            if DEBUG:
+                self.log(
+                    "Network: "
+                    + str(groups.group(1))
+                    + " Quality: "
+                    + str(groups.group(2))
+                )
+
+            response = {
+                "message": {"ssid": groups.group(1), "quality": groups.group(2)}
+            }
+
+        except:
             response = {"error": "getWifiInfo Error"}
 
-        logger.debug(f"get_wifi_info: {response}")
+        if DEBUG:
+            self.log("getWifiInfo: " + str(response))
+
         return json.dumps(response)
 
-    def get_wifi_networks(self) -> str:
-        """Get a list of available Wi-Fi networks."""
+    def getWifiNetworks(self):
         try:
-            ps = subprocess.Popen(["sudo", "iwlist", "wlan0", "scan"], stdout=subprocess.PIPE)
-            process = subprocess.check_output(["grep", "ESSID:"], stdin=ps.stdout)
+            ps = subprocess.Popen(
+                ("sudo", "iwlist", "wlan0", "scan"), stdout=subprocess.PIPE
+            )
+            process = subprocess.check_output(("grep", "ESSID:"), stdin=ps.stdout)
             ps.wait()
             networks = process.decode("utf-8")
-            response = {"message": networks}
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to list Wi-Fi networks: {e}", exc_info=True)
-            response = {"error": "Could not list networks"}
+            response = {
+                "message": str(networks),
+            }
+        except:
+            response = {
+                "error": "Could not list networks",
+            }
 
-        logger.debug(f"get_wifi_networks: {response}")
+        if DEBUG:
+            self.log("getWifiInfo: " + str(response))
+
         return json.dumps(response)
 
-    def set_wifi_network(self, params: str) -> str:
-        """Connect to a Wi-Fi network."""
+    # Connect to a wifi network
+    def setWifiNetwork(self, params):
         p = parse_react_json(params)
-        if not p or "ssid" not in p or "password" not in p:
-            return json.dumps({"error": "Error: No credentials provided"})
+        if p == "":
+            response = {"error": "Error: No credentials provided"}
+            return json.dumps(response)
 
-        ssid, password = p["ssid"], p["password"]
-        try:
+        if "ssid" in p and "password" in p:
+            ssid = str(p["ssid"])
+            password = str(p["password"])
+            # Use subprocess.check_output if you expect a response
             process = subprocess.check_output(
-                ["sudo", "bash", "/home/pi/firmware/bin/util/connect-wifi-network.sh", ssid, password],
-                stderr=subprocess.STDOUT
+                [
+                    "sudo",
+                    "bash",
+                    "/home/pi/firmware/bin/util/connect-wifi-network.sh",
+                    ssid,
+                    password,
+                ],
+                stderr=subprocess.STDOUT,
             )
-            response = {"message": process.decode("utf-8")}
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to connect to Wi-Fi network: {e}", exc_info=True)
-            response = {"error": "Error: Invalid credentials"}
 
-        logger.debug(f"set_wifi_network: {params} - {response}")
+            response = {"message": str(process.decode("utf-8"))}
+        else:
+            response = {"message": "Error: Invalid credentials"}
+
+        if DEBUG:
+            self.log("setWifiNetwork: " + str(params) + " - " + str(response))
+
         return json.dumps(response)
 
-    def check_wifi_connection(self) -> str:
-        """Check if the device is connected to the internet."""
+    def checkWifiConnection(self):
         try:
             process = subprocess.check_output(
                 ["sudo", "bash", "/home/pi/firmware/bin/util/check-network-curl.sh"],
-                stderr=subprocess.STDOUT
+                stderr=subprocess.STDOUT,
             )
-            result = process.decode("utf-8").strip()
+            result = str(process.decode("utf-8")).strip("\n")
             if result != "true":
-                response = {"error": result}
+                response = {
+                    "error": result,
+                }
             else:
-                response = {"message": result}
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to check Wi-Fi connection: {e}", exc_info=True)
-            response = {"error": "Could not connect"}
+                response = {
+                    "message": result,
+                }
+        except:
+            response = {
+                "error": "Could not connect",
+            }
 
-        logger.debug(f"check_wifi_connection: {response}")
+        if DEBUG:
+            self.log("checkWifiConnection: " + str(response))
+
         return json.dumps(response)
 
-    def log(self, text: str) -> str:
-        """Log a message."""
-        logger.info(f"[Cloud] {text}")
-        response = {"message": "ok"}
+    def log(self, text):
+        print("[Cloud] %s" % text)
+        response = {
+            "message": "ok",
+        }
         return json.dumps(response)
 
-    def long_time(self, params: str) -> str:
-        """Wait for a long time."""
+    def longTime(self, params):
         time.sleep(15)
         response = {"message": "ok"}
         return json.dumps(response)
 
-    def remove_all_storage(self) -> str:
-        """Remove all storage files."""
+    def removeAllStorage(self):
         try:
-            os.system(f"find {TMP_DIR} -mindepth 1 -delete")
-            response = {"message": "ok"}
-        except OSError as e:
-            logger.error(f"Failed to remove storage files: {e}", exc_info=True)
-            response = {"error": "Failed to remove storage files"}
+            os.system("find " + TMP_DIR + " -mindepth 1 -delete")
+        except:
+            pass
+
+        response = {"message": "ok"}
 
         return json.dumps(response)
 
-    def toggle_fullscreen(self) -> None:
-        """Toggle the fullscreen mode of the window."""
+    def toggleFullscreen(self):
         webview.windows[0].toggle_fullscreen()
 
-    def update(self) -> str:
-        """Update the system."""
+    def update(self):
         try:
+            # Use subprocess.check_output if you expect a response
             process = subprocess.check_output(
                 ["sudo", "bash", "/home/pi/firmware/bin/setup/update.sh"],
-                stderr=subprocess.STDOUT
+                stderr=subprocess.STDOUT,
             )
-            response = {"message": process.decode("utf-8")}
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to update: {e}", exc_info=True)
-            response = {"error": "Could not update"}
 
-        logger.debug(f"update: {response}")
+            response = {"message": str(process.decode("utf-8"))}
+        except:
+            response = {
+                "error": "Could not update",
+            }
+
+        if DEBUG:
+            self.log("update: " + str(response))
+
         return json.dumps(response)
 
-    def list_cron_jobs(self) -> str:
-        """List all cron jobs."""
+    def list_cron_jobs(self):
         result = cron.list()
-        logger.debug(f"list_cron_jobs: {result}")
+        if DEBUG:
+            self.log("list_cron_jobs: " + str(result))
         return json.dumps(result)
 
-    def add_cron_job(self, params: str) -> str:
-        """Add a new cron job."""
+    def add_cron_job(self, params):
         p = parse_react_json(params)
         if not p or "cron_job" not in p or "name" not in p:
-            return json.dumps({"error": "Error: Invalid parameters"})
+            response = {"error": "Error: Invalid parameters"}
+            return json.dumps(response)
 
-        logger.info(f"[App] Adding cron job: {p['name']} - {p['cron_job']}")
-        result = cron.add(p["cron_job"], p["name"])
+        self.log(f"[App] Adding cron job: {p['name']} - {p['cron_job']}")
+        result = cron.add(p['cron_job'], p['name'])
         return json.dumps(result)
 
-    def delete_cron_job(self, params: str) -> str:
-        """Delete a cron job."""
+    def delete_cron_job(self, params):
         p = parse_react_json(params)
         if not p or "name" not in p:
-            return json.dumps({"error": "Error: Invalid parameters"})
+            response = {"error": "Error: Invalid parameters"}
+            return json.dumps(response)
 
-        result = cron.delete(p["name"])
-        logger.debug(f"delete_cron_job: {result}")
+        result = cron.delete(p['name'])
+        if DEBUG:
+            self.log(f"delete_cron_job: {str(result)}")
         return json.dumps(result)
 
-    def update_cron_job(self, params: str) -> str:
-        """Update an existing cron job."""
+    def update_cron_job(self, params):
         p = parse_react_json(params)
         if not p or "old_name" not in p or "new_cron_job" not in p or "new_name" not in p:
-            return json.dumps({"error": "Invalid parameters"})
+            response = {"error": "Error: Invalid parameters"}
+            return json.dumps(response)
 
-        result = cron.update(p["old_name"], p["new_cron_job"], p["new_name"])
-        logger.debug(f"update_cron_job: {result}")
+        result = cron.update(p['old_name'], p['new_cron_job'], p['new_name'])
+        if DEBUG:
+            self.log(f"update_cron_job: {str(result)}")
         return json.dumps(result)
 
-def main():
-    """Main function to create and start the webview window."""
+
+
+    def __init__(self):
+        # Get hardware ID on init
+        self.HW_ID = self._get_hw_id()
+        self.log("Initialized Python-JS API with HardwareID: " + self.HW_ID)
+
+    def init(self, params):
+        response = {"message": "Python API {0}".format(sys.version)}
+        return json.dumps(response)
+
+
+if __name__ == "__main__":
     api = Api()
+    # https: // pywebview.flowrl.com/guide/api.html  # webview-create-window
     webview.create_window(
         "Smartcloud",
         url="/home/pi/firmware/out/index.html",
@@ -348,8 +459,6 @@ def main():
         text_select=False,
         min_size=(320, 240),
         background_color="#F00"
+        # url="https://39b8-107-141-224-67.ngrok-free.app",
     )
     webview.start(debug=DEBUG, http_server=True)
-
-if __name__ == "__main__":
-    main()
