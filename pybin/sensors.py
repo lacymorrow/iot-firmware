@@ -30,9 +30,3 @@ def getTemperatureHumidity(self):
         self.log("getTemperatureHumidity: " + str(response))
 
     return json.dumps(response)
-
-def __main__():
-    print(getTemperatureHumidity())
-
-if __name__ == "__main__":
-    __main__()
