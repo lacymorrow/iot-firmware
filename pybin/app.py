@@ -9,6 +9,7 @@ import os
 import random
 import re
 import socket
+import storage
 import struct
 import subprocess
 import sys
@@ -23,21 +24,6 @@ import cron
 """
 The pywebview front facing gui
 """
-
-DEBUG = True
-TMP_DIR = "/home/pi/iot_tmp/"
-STORAGE_FILE = TMP_DIR + ".iot_storage_"
-
-def parse_react_json(react_json):
-    try:
-        p = ast.literal_eval(react_json)
-    except:
-        try:
-            p = ast.literal_eval(json.dumps(react_json))
-        except:
-            return ""
-
-    return p
 
 class Api:
     # Get raspi hardware ID
@@ -68,58 +54,15 @@ class Api:
 
     # Usage: get({key})
     def get(self, params):
-        p = parse_react_json(params)
-
-        if p != "" and "key" in p:
-            key = p["key"]
-            try:
-                f = open(STORAGE_FILE + str(key), "r")
-                value = f.read()
-                f.close()
-                try:
-                    response = {"message": ast.literal_eval(value)}
-                except:
-                    response = {"message": str(value)}
-            except:
-                # Not set
-                response = {"message": ""}
-        else:
-            response = {"error": "Error: No key provided"}
-
-        if DEBUG:
-            self.log("get: " + str(params) + " - " + str(response))
-
-        self.log("get: " + str(params) + " - " + str(response))
-        return json.dumps(response)
+        result = storage.get(params)
+        self.log("get: " + str(params) + " - " + str(result))
+        return result
 
     # Usage: set({key, data})
     def set(self, params):
-        p = parse_react_json(params)
-        if p == "":
-            response = {"error": "Error: key and value must be provided"}
-            return json.dumps(response)
-
-        if "key" in p and "data" in p:
-            key = str(p["key"])
-            data = str(p["data"])
-            try:
-                # Create folder if needed
-                if not os.path.exists(TMP_DIR):
-                    os.makedirs(TMP_DIR)
-                f = open(STORAGE_FILE + key, "w")
-                f.write(data)
-                f.close()
-                response = {"message": "ok"}
-                self.log("Set " + key + ": " + data)
-            except:
-                response = {"error": "Error: Could not set file"}
-        else:
-            response = {"error": "Set Error"}
-
-        if DEBUG:
-            self.log("set: " + str(params) + " - " + str(response))
-
-        return json.dumps(response)
+        result = storage.set(params)
+        self.log("set: " + str(params) + " - " + str(result))
+        return result
 
     def deviceOn(self):
         device = "26"

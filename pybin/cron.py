@@ -8,7 +8,7 @@ def log(text):
 
 def listAll():
     try:
-        process = subprocess.check_output(['sudo', 'crontab', '-l'], stderr=subprocess.STDOUT)
+        process = subprocess.check_output(['crontab', '-l'], stderr=subprocess.STDOUT)
         cron_jobs = process.decode("utf-8").strip().split('\n')
         named_jobs = {}
         for line in cron_jobs:
@@ -60,6 +60,7 @@ def delete(name):
 def delete_all():
     try:
         subprocess.run(['crontab', '-r'], check=True)
+        subprocess.run(['crontab', '-i', '/dev/null'], check=True)
         response = {"message": "All cron jobs deleted"}
     except subprocess.CalledProcessError as e:
         response = {"error": "Could not delete all cron jobs", "details": str(e)}
