@@ -59,8 +59,11 @@ def delete(name):
 
 def delete_all():
     try:
-        subprocess.run(['crontab', '-r'], check=True)
-        subprocess.run(['crontab', '-i', '/dev/null'], check=True)
+        # subprocess.run(['crontab', '-r'], check=True)
+        # Run `echo "" | crontab -` to make sure the cron file is empty
+
+        subprocess.run(['echo', ''], check=True)
+        subprocess.run(['crontab', '-'], check=True)
         response = {"message": "All cron jobs deleted"}
     except subprocess.CalledProcessError as e:
         response = {"error": "Could not delete all cron jobs", "details": str(e)}
