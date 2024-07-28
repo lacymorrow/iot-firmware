@@ -402,30 +402,36 @@ class Api:
 
         return json.dumps(result)
 
-    def add_cron_job(self, cron_job):
-        print("[App] Adding cron job: " + cron_job)
-        result = cron.add(cron_job)
-
-        # if DEBUG:
-        #     self.log("add_cron_job: " + str(result))
-
+    def add_cron_job(self, params):
+        p = parse_react_json(params)
+        if p == "":
+            response = {"error": "Error: No params provided"}
+            return json.dumps(response)
+        result = cron.add(p["cron_job"], p["name"])
         return json.dumps(result)
 
-    def delete_cron_job(self, cron_job):
-        result = cron.delete(cron_job)
-
+    def delete_cron_job(self, params):
+        p = parse_react_json(params)
+        if p == "":
+            response = {"error": "Error: No params provided"}
+            return json.dumps(response)
+        result = cron.delete(p["name"])
         if DEBUG:
-            self.log("delete_cron_job: " + str(result))
-
+            self.log(f"delete_cron_job: {str(result)}")
         return json.dumps(result)
 
-    def update_cron_job(self, old_cron_job, new_cron_job):
-        result = cron.update(old_cron_job, new_cron_job)
-
+    def update_cron_job(self, params):
+        p = parse_react_json(params)
+        if p == "":
+            response = {"error": "Error: No params provided"}
+            return json.dumps(response)
+        delete_result = cron.delete(p["old_name"])
+        if "error" in delete_result:
+            return json.dumps(delete_result)
+        add_result = cron.add(new_cron_job, new_name)
         if DEBUG:
-            self.log("update_cron_job: " + str(result))
-
-        return json.dumps(result)
+            self.log(f"update_cron_job: {str(add_result)}")
+        return json.dumps(add_result)
 
 
 
