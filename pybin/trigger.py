@@ -20,6 +20,7 @@ def getTemperature():
         .strip()
     )
     temp = result.split(" ")
+    temp = temp[0]
 
     print(temp)
 
