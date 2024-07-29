@@ -22,14 +22,7 @@ def getTemperature():
     temp = result.split(" ")
     temp = temp[0]
 
-    print(temp)
-
-    if "message" in temp:
-        temp = temp["message"]
-
-    temp = json.loads(temp)
-
-    return temp.message
+    return temp
 
 def doesNeedChange():
     trigger_temp = storage.get({"key": "trigger"})
