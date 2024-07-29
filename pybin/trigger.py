@@ -43,10 +43,10 @@ def __main__():
     print(trigger_temp)
     if temp < trigger_temp+0.5:
         print("Turning on")
-        subprocess.check_output(["sudo", "bash", "/home/pi/firmware/bin/util/gpio.sh", "on"])
+        subprocess.check_output(["sudo", "bash", "/home/pi/firmware/bin/util/gpio.sh", "1"])
     else:
         print("Turning off")
-        subprocess.check_output(["sudo", "bash", "/home/pi/firmware/bin/util/gpio.sh", "off"])
+        subprocess.check_output(["sudo", "bash", "/home/pi/firmware/bin/util/gpio.sh", "0"])
 
 if __name__ == "__main__":
     __main__()
