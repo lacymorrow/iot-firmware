@@ -19,14 +19,13 @@ def getTemperature():
         .decode()
         .strip()
     )
-    [temp] = result.split(" ")
 
-    print(temp)
+    print(result)
 
-    if "message" in temp:
-        temp = temp["message"]
+    if "message" in result:
+        temp = result["message"]
 
-    temp = json.loads(temp)
+    temp = json.loads(result)
 
     return temp.message
 
