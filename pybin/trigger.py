@@ -1,3 +1,5 @@
+# Trigger the device on/off based on the temperature``
+
 import subprocess
 import json
 
@@ -8,7 +10,7 @@ STORAGE_FILE = TMP_DIR + ".iot_storage_"
 def log(text):
     print("[Sensors] %s" % text)
 
-def getTemperature(self):
+def getTemperature():
     try:
         # Get temp/humidity from device
         result = (
@@ -24,7 +26,7 @@ def getTemperature(self):
     except:
         return {"error": "getTemperature Error"}
 
-def doesNeedChange(self):
+def doesNeedChange():
     trigger_temp = storage.get({"key": "trigger"})
     temp = getTemperature()
     if temp < trigger_temp:
