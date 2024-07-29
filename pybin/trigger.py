@@ -43,6 +43,7 @@ def __main__():
     print(temp)
     print('Trigger temp: ')
     print(trigger_temp)
+
     if temp < trigger_temp+0.5:
         print("Turning on")
         subprocess.check_output(["sudo", "bash", "/home/pi/firmware/bin/util/gpio-on.sh"])
