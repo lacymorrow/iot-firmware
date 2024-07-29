@@ -11,27 +11,24 @@ def log(text):
     print("[Sensors] %s" % text)
 
 def getTemperature():
-    try:
-        # Get temp/humidity from device
-        result = (
-            subprocess.check_output(
-                ["sudo", "python", "/home/pi/firmware/drivers/temperhum/temperhum.py", "--nosymbols"]
-            )
-            .decode()
-            .strip()
+    # Get temp/humidity from device
+    result = (
+        subprocess.check_output(
+            ["sudo", "python", "/home/pi/firmware/drivers/temperhum/temperhum.py", "--nosymbols"]
         )
-        [temp] = result.split(" ")
+        .decode()
+        .strip()
+    )
+    [temp] = result.split(" ")
 
-        print(temp)
+    print(temp)
 
-        if "message" in temp:
-            temp = temp["message"]
+    if "message" in temp:
+        temp = temp["message"]
 
-        temp = json.loads(temp)
+    temp = json.loads(temp)
 
-        return temp.message
-    except:
-        return 0
+    return temp.message
 
 def doesNeedChange():
     trigger_temp = storage.get({"key": "trigger"})
