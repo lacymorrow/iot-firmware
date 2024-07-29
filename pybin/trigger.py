@@ -44,7 +44,8 @@ def doesNeedChange():
 
 def __main__():
     temp = float(getTemperature())
-    trigger_temp = float(storage.get({"key": "trigger"}))
+    # trigger_temp = float(storage.get({"key": "trigger"}))
+    trigger_temp = 20
     print('Current temp: ' + temp)
     print('Trigger temp: ' + trigger_temp)
     if temp < trigger_temp+0.5:
