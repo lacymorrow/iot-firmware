@@ -21,8 +21,8 @@ def getTemperature():
             .strip()
         )
         [temp] = result.split(" ")
-        if temp.message:
-            temp = temp.message
+        if "message" in temp:
+            temp = temp["message"]
 
         return temp
     except:
