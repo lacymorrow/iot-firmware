@@ -24,7 +24,7 @@ def getTemperature():
 
         return temp
     except:
-        return {"error": "getTemperature Error"}
+        return 0
 
 def doesNeedChange():
     trigger_temp = storage.get({"key": "trigger"})
