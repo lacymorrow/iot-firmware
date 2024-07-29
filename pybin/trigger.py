@@ -19,7 +19,7 @@ def getTemperature():
         .decode()
         .strip()
     )
-    [temp] = result.split(" ")
+    temp = result.split(" ")
 
     print(temp)
 
