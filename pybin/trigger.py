@@ -21,10 +21,15 @@ def getTemperature():
             .strip()
         )
         [temp] = result.split(" ")
+
+        print(temp)
+
         if "message" in temp:
             temp = temp["message"]
 
-        return temp
+        temp = json.loads(temp)
+
+        return temp.message
     except:
         return 0
 
