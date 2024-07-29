@@ -1,5 +1,5 @@
 # Trigger the device on/off based on the temperature``
-
+import storage
 import subprocess
 import json
 
