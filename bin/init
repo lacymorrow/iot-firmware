@@ -1,9 +1,18 @@
 #!/bin/sh
 
+# Prevent Sleep
+xset -dpms
+xset s 0
 
 # Initialize hardware
 echo ">Booting Smartcloud..."
 echo "-*- Init -*-"
+
+# Print the IP address
+_IP=$(hostname -I) || true
+if [ "$_IP" ]; then
+  printf "My IP address is %s\n" "$_IP"
+fi
 
 # If git doesn't exist, this shouldn't even be here, but start over
 if ! command -v git &> /dev/null
