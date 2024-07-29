@@ -40,7 +40,7 @@ def __main__():
     trigger_temp = float(storage.get({"key": "trigger"}))
     print('Current temp: ' + temp)
     print('Trigger temp: ' + trigger_temp)
-    if temp < trigger_temp:
+    if temp < trigger_temp+0.5:
         print("Turning on")
         subprocess.check_output(["sudo", "bash", "/home/pi/firmware/bin/util/gpio.sh", "on"])
     else:
